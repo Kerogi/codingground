@@ -1,4 +1,5 @@
 #include "tlv.h"
+#include "tlv_scheme.h"
 
 #include <iostream>
 #include <string>
@@ -6,6 +7,7 @@
 #include <vector>
 #include <limits>
 #include <iomanip>
+#include <assert.h>  
 
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
@@ -74,6 +76,29 @@ void print(tlv::chain c, int i= 0)
     }
 }
 
+class CustomTlv
+{
+public:
+	TaggedTlv<65, StringTlv> first_name;
+	TaggedTlv<65, StringTlv> last_name;
+
+	bool parse(tlv::iterator& it)
+	{
+		return first_name.parse(it) && last_name.parse(++it);
+	}
+};
+
+using SimpleString = TaggedTlv<65, StringTlv>;
+using FullName = TaggedTlv<66, NestedTlv<
+	TuppleTlv<
+		SimpleString, 
+		SimpleString, 
+		TaggetNestedTlv<66, CustomTlv > 
+	> 
+	>>;
+
+
+
 int main()
 {
     std::vector<std::string> words = {
@@ -119,6 +144,17 @@ int main()
     std::cout << ss.str();
     
     print(tlv::chain(test_tlv.data(), test_tlv.size()), 1);
-
+	auto achain = tlv::chain(test_tlv.data(), test_tlv.size());
+	auto ait = achain.begin();
+	SequenceTlv<SimpleString> seq;
+	FullName cred;
+	seq.parse(ait);
+	cred.parse(ait);
+	std::cout<<"Greetings: "<<std::endl;
+	for(auto strt: seq) { 
+		std::cout<<"'" << strt.str <<"'"<< std::endl; 
+	}
+	std::cout<<"From :"<< cred.value.str <<" "<< cred.next.value.str << std::endl;
+	std::cout<<"	 :"<< cred.next.next.value.first_name.str <<" "<< cred.next.next.value.last_name.str << std::endl;
     
 }
