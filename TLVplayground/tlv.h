@@ -4,6 +4,7 @@
 #define __TLV__
 
 #include <vector>
+#include <cstddef>
 
 namespace tlv 
 {
@@ -11,7 +12,7 @@ namespace tlv
 using byte = unsigned char;
 using int16 = short;
 using int32 = int;
-//using size_t = int;
+
 const size_t TLV_TAG_SIZE = 1;
 const size_t TLV_LENGTH_SIZE = 2;
 const size_t TLV_LENGTH_OFF = TLV_TAG_SIZE;
@@ -33,7 +34,7 @@ class iterator;
 class cursor
 {
 	const byte* ptr;
-	cursor(const buffer& buf, size_t offset);
+	cursor(const buffer& buf, ptrdiff_t offset);
 public:
 	friend class iterator;
 
@@ -47,12 +48,12 @@ class iterator
 {
 	static buffer nullbuff;
 	const buffer& buf;
-	size_t offset;
+	ptrdiff_t offset;
 	bool valid = true;	
 public:
     iterator();
-
-    iterator(const buffer& buf, size_t offset);
+	operator bool() const {return valid;}
+    iterator(const buffer& buf, ptrdiff_t offset);
     bool operator!=(const iterator& other) const;
     cursor operator*() const;
     iterator& operator++();
